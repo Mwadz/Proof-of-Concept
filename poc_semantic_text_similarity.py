@@ -161,21 +161,18 @@ with mod_container:
     data['sentence1']  = data['sentence1'].astype('str')
  
     # let's pass the input to the loaded_model with torch compiled with cuda
-     if prompt:
-         # let's get the result
+    from sentence_transformers import CrossEncoder
+    XpathFinder = CrossEncoder("cross-encoder/stsb-roberta-base")
+    sentence_pairs = []
+    for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
+        sentence_pairs.append([sentence1, sentence2])
+        simscore = XpathFinder.predict(prompt)
          
-         from sentence_transformers import CrossEncoder
-         XpathFinder = CrossEncoder("cross-encoder/stsb-roberta-base")
-         sentence_pairs = []
-         for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
-           sentence_pairs.append([sentence1, sentence2])
-         simscore = XpathFinder.predict(prompt)
-         
-         # sorting the df to get highest scoring xpath_container
-         data['SBERT CrossEncoder_Score'] = XpathFinder.predict(sentence_pairs)
-         data.sort_values(by=['SBERT CrossEncoder_Score'], ascending=False)
-         most_acc = data.head(5)
-         # predictions
-         st.write("Highest Similarity score: ", simscore)
-         st.text("Is this one of these the Xpath you're looking for?")
-         st.write(st.write(most_acc["input_text"])) 
+        # sorting the df to get highest scoring xpath_container
+        data['SBERT CrossEncoder_Score'] = XpathFinder.predict(sentence_pairs)
+        data.sort_values(by=['SBERT CrossEncoder_Score'], ascending=False)
+        most_acc = data.head(5)
+        # predictions
+        st.write("Highest Similarity score: ", simscore)
+        st.text("Is this one of these the Xpath you're looking for?")
+        st.write(st.write(most_acc["input_text"])) 
