@@ -7,3 +7,4 @@ tqdm
 sklearn
 streamlit
 pyngrok
+spacy
