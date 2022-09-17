@@ -11,9 +11,7 @@ stsb_dataset = load_dataset('stsb_multi_mt', 'en')
 stsb_train = pd.DataFrame(stsb_dataset['train'])
 stsb_test = pd.DataFrame(stsb_dataset['test'])
 
-# Check loaded data
-print(stsb_train.shape, stsb_test.shape)
-stsb_test.head()
+
 
 #Creating helper functions
 #The first function is to pre-process texts by lemmatizing, lowercasing, and removing numbers and stop words.
@@ -58,31 +56,6 @@ def cos_sim(sentence1_emb, sentence2_emb):
     """
     cos_sim = cosine_similarity(sentence1_emb, sentence2_emb)
     return np.diag(cos_sim)
-
-# Data Setup
-
-data = (pd.read_csv("/content/SBERT_data.csv")).drop(['Unnamed: 0'], axis = 1)
-
-prompt = input("Enter prompt: ")
-data['prompt']= prompt
-data.rename(columns = {'target_text':'sentence2', 'prompt':'sentence1'}, inplace = True)
-data['sentence2'] = data['sentence2'].astype('str')
-data['sentence1']  = data['sentence1'].astype('str')
-
-# Loop
-
-from sentence_transformers import CrossEncoder
-XpathFinder = CrossEncoder("cross-encoder/stsb-roberta-base")
-sentence_pairs = []
-for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
-  sentence_pairs.append([sentence1, sentence2])
-
-data['SBERT CrossEncoder_Score'] = XpathFinder.predict(sentence_pairs, show_progress_bar = True)
-
-#@title Sort 
-data.sort_values(by=['SBERT CrossEncoder_Score'], ascending=False)
-
-
 # App
 
 import io
@@ -153,13 +126,6 @@ with mod_container:
     data['prompt']= prompt
     data.rename(columns = {'target_text':'sentence2', 'prompt':'sentence1'}, inplace = True)
     data['sentence2'] = data['sentence2'].astype('str')
-    
-    
-    
-    
-    
-    
-    
     data['sentence1']  = data['sentence1'].astype('str')
  
     # let's pass the input to the loaded_model with torch compiled with cuda
@@ -168,13 +134,14 @@ with mod_container:
     sentence_pairs = []
     for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
         sentence_pairs.append([sentence1, sentence2])
-        simscore = XpathFinder.predict(prompt)
+    simscore = XpathFinder.predict(prompt)
          
-        # sorting the df to get highest scoring xpath_container
-        data['SBERT CrossEncoder_Score'] = XpathFinder.predict(sentence_pairs)
-        data.sort_values(by=['SBERT CrossEncoder_Score'], ascending=False)
-        most_acc = data.head(5)
-        # predictions
-        st.write("Highest Similarity score: ", simscore)
-        st.text("Is this one of these the Xpath you're looking for?")
-        st.write(st.write(most_acc["input_text"])) 
+    # sorting the df to get highest scoring xpath_container
+    data['SBERT CrossEncoder_Score'] = XpathFinder.predict(sentence_pairs)
+    most_acc = data.sort_values(by=['SBERT CrossEncoder_Score'], ascending=False)
+    most_acc = data.head(5)
+    
+    # predictions
+    st.write("Highest Similarity score: ", simscore)
+    st.text("Is this one of these the Xpath you're looking for?")
+    st.write(st.write(most_acc["input_text"])) 
