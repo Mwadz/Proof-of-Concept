@@ -110,17 +110,15 @@ mod_container = st.container()
 
 # Header
 with header_container:
-
-    # different levels of text you can include in your app
     st.title("Xpath Finder App")
 
 
 # model container
 with mod_container:
-    # collecting input from user
+     # collecting input from user
     prompt = st.text_input("Enter your description below ...")
 
-    # Loading e data
+    # Loading e comparison data
     data = (pd.read_csv("/content/SBERT_data.csv")).drop(['Unnamed: 0'], axis = 1)
 
     data['prompt']= prompt
