@@ -1,5 +1,6 @@
 pip
 datasets
+en_core_web_sm
 sentence_transformers
 pandas
 numpy
