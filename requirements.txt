@@ -1,4 +1,4 @@
-pip
+pip == 22.2.2
 datasets
 en_core_web_sm
 sentence_transformers
