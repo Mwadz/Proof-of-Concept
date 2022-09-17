@@ -22,7 +22,9 @@ stsb_test.head()
 
 from sklearn.metrics.pairwise import cosine_similarity
 import spacy
-nlp = spacy.load("en_core_web_sm")
+import en_core_web_sm
+nlp = en_core_web_sm.load()
+# nlp = spacy.load("en_core_web_sm")
 
 def text_processing(sentence):
     """
