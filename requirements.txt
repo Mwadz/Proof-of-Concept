@@ -1,10 +1,7 @@
 pip == 22.2.2
-datasets
-sentence_transformers
-pandas
 numpy
-sklearn
+pandas
 streamlit
-pyngrok
-spacy
+sentence_transformers
+
 
