@@ -83,7 +83,7 @@ with mod_container:
 
 
 #         XpathFinder = CPU_Unpickler(open('XpathFinder1.sav','rb')).load()
-]       XpathFinder = CrossEncoder("cross-encoder/stsb-roberta-base")
+        XpathFinder = CrossEncoder("cross-encoder/stsb-roberta-base")
         
         sentence_pairs = []
         for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
