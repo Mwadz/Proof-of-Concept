@@ -74,15 +74,16 @@ with mod_container:
         # let's get the result
         from sentence_transformers import CrossEncoder
         
-        class CPU_Unpickler(pickle.Unpickler):
-           def find_class(self, module, name):
-              if module == 'torch.storage' and name == '_load_from_bytes':
-                  return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
-              else:
-                  return super().find_class(module, name)
+#         class CPU_Unpickler(pickle.Unpickler):
+#            def find_class(self, module, name):
+#               if module == 'torch.storage' and name == '_load_from_bytes':
+#                   return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+#               else:
+#                   return super().find_class(module, name)
 
 
-        XpathFinder = CPU_Unpickler(open('XpathFinder1.sav','rb')).load()
+#         XpathFinder = CPU_Unpickler(open('XpathFinder1.sav','rb')).load()
+]       XpathFinder = CrossEncoder("cross-encoder/stsb-roberta-base")
         
         sentence_pairs = []
         for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
