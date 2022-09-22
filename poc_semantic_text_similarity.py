@@ -1,63 +1,3 @@
-#loading training set
-import pandas as pd
-import numpy as np
-from tqdm import tqdm
-tqdm.pandas()
-from datasets import load_dataset
-
-
-# Load the English STSB dataset
-stsb_dataset = load_dataset('stsb_multi_mt', 'en')
-stsb_train = pd.DataFrame(stsb_dataset['train'])
-stsb_test = pd.DataFrame(stsb_dataset['test'])
-
-
-
-#Creating helper functions
-#The first function is to pre-process texts by lemmatizing, lowercasing, and removing numbers and stop words.
-#The second function takes in two columns of text embeddings and returns the row-wise cosine similarity between the two columns.
-
-
-from sklearn.metrics.pairwise import cosine_similarity
-import spacy
-import en_core_web_sm
-nlp = en_core_web_sm.load()
-# nlp = spacy.load("en_core_web_sm")
-
-def text_processing(sentence):
-    """
-    Lemmatize, lowercase, remove numbers and stop words
-    
-    Args:
-      sentence: The sentence we want to process.
-    
-    Returns:
-      A list of processed words
-    """
-    sentence = [token.lemma_.lower()
-                for token in nlp(sentence) 
-                if token.is_alpha and not token.is_stop]
-    
-    return sentence
-
-
-def cos_sim(sentence1_emb, sentence2_emb):
-    """
-    Cosine similarity between two columns of sentence embeddings
-    
-    Args:
-      sentence1_emb: sentence1 embedding column
-      sentence2_emb: sentence2 embedding column
-    
-    Returns:
-      The row-wise cosine similarity between the two columns.
-      For instance is sentence1_emb=[a,b,c] and sentence2_emb=[x,y,z]
-      Then the result is [cosine_similarity(a,x), cosine_similarity(b,y), cosine_similarity(c,z)]
-    """
-    cos_sim = cosine_similarity(sentence1_emb, sentence2_emb)
-    return np.diag(cos_sim)
-# App
-
 import io
 import netrc
 import pickle
@@ -83,26 +23,27 @@ st.markdown(
     img{{
     	max-width:40%;
     	margin-bottom:40px;
-     }}
- </style>
- """,
-     unsafe_allow_html=True,
- )
- 
- # loading the saved model
-# loaded_model = pickle.load(open('XpathFinder1.sav', 'rb'))
+    }}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# # let's load the saved model
+#loaded_model = pickle.load(open('XpathFinder1.sav', 'rb'))
 #loaded_model = pickle.load('XpathFinder1.sav', map_location='cpu')
-# 
-# 
-# #class CPU_Unpickler(pickle.Unpickler):
-# #    def find_class(self, module, name):
-# #        if module == 'torch.storage' and name == '_load_from_bytes':
-# #            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
-# #        else:
-# #            return super().find_class(module, name)
-# #
-# 
-# #loaded_model = CPU_Unpickler(open('XpathFinder1.sav', 'rb')).load()
+
+
+#class CPU_Unpickler(pickle.Unpickler):
+#    def find_class(self, module, name):
+#        if module == 'torch.storage' and name == '_load_from_bytes':
+#            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+#        else:
+#            return super().find_class(module, name)
+
+
+#loaded_model = CPU_Unpickler(open('XpathFinder1.sav', 'rb')).load()
+
 
 # Containers
 header_container = st.container()
@@ -110,36 +51,52 @@ mod_container = st.container()
 
 # Header
 with header_container:
+
+    # different levels of text you can include in your app
     st.title("Xpath Finder App")
 
 
 # model container
 with mod_container:
-     # collecting input from user
-    prompt = st.text_input("Enter your description below ...")
+    # collecting input from user
+    prompt = st.text_input("Enter your xpath description below ...")
 
-    # Loading e comparison data
-    data = (pd.read_csv("/content/SBERT_data.csv")).drop(['Unnamed: 0'], axis = 1)
+    # Loading e data
+    data = (pd.read_csv("data_SBERT.txt")).drop(['Unnamed: 0'], axis = 1)
 
     data['prompt']= prompt
     data.rename(columns = {'target_text':'sentence2', 'prompt':'sentence1'}, inplace = True)
     data['sentence2'] = data['sentence2'].astype('str')
     data['sentence1']  = data['sentence1'].astype('str')
- 
-    # let's pass the input to the loaded_model with torch compiled with cuda
-    from sentence_transformers import CrossEncoder
-    XpathFinder = CrossEncoder("cross-encoder/stsb-roberta-base")
-    sentence_pairs = []
-    for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
-        sentence_pairs.append([sentence1, sentence2])
-    simscore = XpathFinder.predict(prompt)
-         
-    # sorting the df to get highest scoring xpath_container
-    data['SBERT CrossEncoder_Score'] = XpathFinder.predict(sentence_pairs)
-    most_acc = data.sort_values(by=['SBERT CrossEncoder_Score'], ascending=False)
-    most_acc = data.head(5)
-    
-    # predictions
-    st.write("Highest Similarity score: ", simscore)
-    st.text("Is this one of these the Xpath you're looking for?")
-    st.write(st.write(most_acc["input_text"])) 
+
+    # passing the input to the loaded_model with torch compiled with cuda
+    if prompt:
+        # let's get the result
+        from sentence_transformers import CrossEncoder
+        
+        class CPU_Unpickler(pickle.Unpickler):
+           def find_class(self, module, name):
+              if module == 'torch.storage' and name == '_load_from_bytes':
+                  return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+              else:
+                  return super().find_class(module, name)
+
+
+        XpathFinder = CPU_Unpickler(open('XpathFinder1.sav','rb')).load()
+        
+        sentence_pairs = []
+        for sentence1, sentence2 in zip(data['sentence1'],data['sentence2']):
+          sentence_pairs.append([sentence1, sentence2])
+        simscore = XpathFinder.predict([prompt])
+  
+        # sorting the df to get highest scoring xpath_container
+        
+        data['SBERT CrossEncoder_Score'] = XpathFinder.predict(sentence_pairs)
+        sorted = data.sort_values(by=['SBERT CrossEncoder_Score'], ascending=False)
+        most_acc = sorted.head(5)
+
+        # predictions
+        st.write("Highest Similarity score: ", simscore)
+        st.text("Is this one of these the Xpath you're looking for?")
+        st.write(st.write(most_acc["input_text"])) 
+        
